@@ -1,0 +1,57 @@
+[
+ {
+   "name": "task_id",
+   "type": "STRING",
+   "mode": "NULLABLE"
+ },
+ {
+   "name": "node_id",
+   "type": "STRING",
+   "mode": "NULLABLE"
+ },
+ {
+   "name": "visit_id",
+   "type": "INTEGER",
+   "mode": "NULLABLE"
+ },
+ {
+   "name": "visit_date",
+   "type": "DATE",
+   "mode": "NULLABLE"
+ },
+ {
+   "name": "original_reported_date",
+   "type": "DATE",
+   "mode": "NULLABLE"
+ },
+ {
+   "name": "node_age",
+   "type": "INTEGER",
+   "mode": "NULLABLE"
+ },
+ {
+   "name": "node_type",
+   "type": "STRING",
+   "mode": "NULLABLE"
+ },
+ {
+   "name": "task_type",
+   "type": "STRING",
+   "mode": "NULLABLE"
+ },
+ {
+   "name": "engineer_skill_level",
+   "type": "INTEGER",
+   "mode": "NULLABLE"
+ },
+ {
+   "name": "engineer_note",
+   "type": "INTEGER",
+   "mode": "REPEATED"
+ },
+ {
+   "name": "outcome",
+   "type": "STRING",
+   "mode": "NULLABLE"
+ }
+]
