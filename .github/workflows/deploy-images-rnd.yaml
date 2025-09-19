@@ -5,7 +5,6 @@ on:
     branches-ignore:
       - 'main'
 
-# Prevent multiple runs for the same branch from running concurrently
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -22,10 +21,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_RND_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_RND_SERVICE_ACCOUNT }}'
+          token_format: 'access_token'
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
