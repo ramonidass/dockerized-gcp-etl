@@ -59,6 +59,7 @@ aws_credentials
 .terraform/
 *.tfstate
 *.tfstate.backup
+*.tfvars
 .serverless/ # Serverless framework build files
 
 # -----------------------------------------------------------------------------

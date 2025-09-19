@@ -6,7 +6,9 @@ from app.utils.schema import Visit
 from app.utils.logger import logger
 
 
-def process_visits(bq_client, storage_client, bucket_name: str, file_name: str):
+def visits_schema_validation(
+    bq_client, storage_client, bucket_name: str, file_name: str
+):
     try:
         bucket = storage_client.bucket(bucket_name)
         blob = bucket.blob(file_name)
@@ -25,7 +27,8 @@ def process_visits(bq_client, storage_client, bucket_name: str, file_name: str):
             except (json.JSONDecodeError, ValidationError) as e:
                 logger.warning(f"[Line {line_num}] Validation failed: {e}")
                 invalid_lines.append(
-                    {"line_number": line_num, "raw_json": line.strip()})
+                    {"line_number": line_num, "raw_json": line.strip()}
+                )
 
         df_valid = pl.DataFrame(
             valid_visits) if valid_visits else pl.DataFrame()

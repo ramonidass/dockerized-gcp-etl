@@ -12,11 +12,14 @@ def bigquery_via_parquet(
     bucket_name: str,
     staging_prefix: str,
     table_id: str,
-    partition_field: str = None
+    partition_field: str = None,
 ):
-    df2 = df.with_columns([pl.col("visit_date").cast(pl.Date),
-                           pl.col("original_reported_date").cast(pl.Date),
-                           ])
+    df2 = df.with_columns(
+        [
+            pl.col("visit_date").cast(pl.Date),
+            pl.col("original_reported_date").cast(pl.Date),
+        ]
+    )
 
     with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tmp_file:
         tmp_path = tmp_file.name
@@ -32,19 +35,15 @@ def bigquery_via_parquet(
     job_config = bq_client.LoadJobConfig(
         source_format=storage_client.SourceFormat.PARQUET,
         write_disposition=bq_client.WriteDisposition.WRITE_APPEND,
-        autodetect=False
+        autodetect=False,
     )
     if partition_field:
         job_config.time_partitioning = bq_client.TimePartitioning(
-            type_=bq_client.TimePartitioningType.DAY,
-            field=partition_field
+            type_=bq_client.TimePartitioningType.DAY, field=partition_field
         )
 
     load_job = bq_client.load_table_from_uri(
-        gcs_uri,
-        table_id,
-        job_config=job_config
-    )
+        gcs_uri, table_id, job_config=job_config)
     load_job.result()
     logger.info(f"Loaded {df2.height} rows into {table_id}")
 
@@ -57,11 +56,12 @@ def ingest_visits(
     staging_prefix: str,
     valid_table_id: str,
     invalid_table_id: str,
-    partition_field: str = "visit_date"
+    partition_field: str = "visit_date",
 ):
     try:
         df_valid, df_invalid = process_visits(
-            bq_client, storage_client, bucket_name, file_name)
+            bq_client, storage_client, bucket_name, file_name
+        )
 
         if df_valid.height > 0:
             logger.info(f"Ingesting {df_valid.height} valid rows...")
@@ -72,7 +72,7 @@ def ingest_visits(
                 bucket_name=bucket_name,
                 staging_prefix=staging_prefix,
                 table_id=valid_table_id,
-                partition_field=partition_field
+                partition_field=partition_field,
             )
         else:
             logger.warning("No valid rows to ingest.")
@@ -86,7 +86,7 @@ def ingest_visits(
                 bucket_name=bucket_name,
                 staging_prefix=staging_prefix,
                 table_id=invalid_table_id,
-                partition_field=None
+                partition_field=None,
             )
         else:
             logger.info("No invalid rows to ingest.")

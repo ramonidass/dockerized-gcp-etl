@@ -16,14 +16,14 @@ class Visit(BaseModel):
     engineer_note: List[int]
     outcome: Literal["SUCCESS", "FAIL"]
 
-    @field_validator('visit_id', 'node_age')
+    @field_validator("visit_id", "node_age")
     @classmethod
     def non_negative_int(cls, v: int, info: ValidationInfo) -> int:
         if v < 0:
             raise ValueError(f"{info.field_name} must be non-negative")
         return v
 
-    @field_validator('engineer_skill_level', mode='before')
+    @field_validator("engineer_skill_level", mode="before")
     @classmethod
     def non_negative_skill(cls, v: int | str) -> int:
         if isinstance(v, str):
@@ -32,7 +32,7 @@ class Visit(BaseModel):
             raise ValueError("engineer_skill_level must be non-negative")
         return v
 
-    @field_validator('engineer_note', mode='before')
+    @field_validator("engineer_note", mode="before")
     @classmethod
     def split_notes(cls, v: str | List[int]) -> List[int]:
         if isinstance(v, str):
