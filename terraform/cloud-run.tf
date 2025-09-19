@@ -5,7 +5,7 @@ resource "google_cloud_run_v2_service" "default" {
 
   template {
     containers {
-      image = "${var.region}-docker.pkg.dev/${var.project_ids[terraform.workspace]}/${var.artifact_registry_repository_name}/${var.cloud_run_service_name}:latest"
+      image = "${var.region}-docker.pkg.dev/${var.project_ids[terraform.workspace]}/${var.artifact_registry_repository_name}/${var.cloud_run_service_name}:${var.image_tag}"
     }
   }
 

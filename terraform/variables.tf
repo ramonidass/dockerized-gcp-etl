@@ -39,3 +39,10 @@ variable "service_account_emails" {
     rnd  = "github-action-deployer@fms-rnd.iam.gserviceaccount.com"
   }
 }
+
+variable "image_tag" {
+  description = "The tag for the docker image"
+  type        = string
+  default     = "latest"
+}
+
