@@ -1,0 +1,36 @@
+name: Deploy Terraform - RND
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_RND_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_RND_SERVICE_ACCOUNT }}'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Apply
+        run: |
+          terraform -chdir=terraform workspace select rnd || terraform -chdir=terraform workspace new rnd
+          terraform -chdir=terraform apply -auto-approve -var="image_tag=${{ github.event.inputs.image_tag }}"
