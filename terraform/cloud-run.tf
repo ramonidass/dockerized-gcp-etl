@@ -1,50 +1,39 @@
-
 resource "google_cloud_run_v2_service" "default" {
- for_each = var.project_ids
- provider = google[each.key]
- name     = var.cloud_run_service_name
- location = var.region
- project  = each.value
+  name     = var.cloud_run_service_name
+  location = var.region
+  project  = var.project_ids[terraform.workspace]
 
- template {
-   containers {
-     image = "${var.region}-docker.pkg.dev/${each.value}/${var.
-artifact_registry_repository_name}/${var.cloud_run_service_name}:latest"
-   }
-   service_account = google_service_account.default[each.key].email
- }
+  template {
+    containers {
+      image = "${var.region}-docker.pkg.dev/${var.project_ids[terraform.workspace]}/${var.artifact_registry_repository_name}/${var.cloud_run_service_name}:latest"
+    }
+  }
+
+  depends_on = [google_project_service.api_enablement]
 }
 
 resource "google_service_account" "default" {
-  for_each     = var.project_ids
-  provider     = google[each.key]
   account_id   = var.cloud_run_service_name
   display_name = "Cloud Run Service Account for FSM Data Pipeline"
-  project      = each.value
+  project      = var.project_ids[terraform.workspace]
 }
 
 resource "google_project_iam_member" "run_invoker" {
-  for_each = var.project_ids
-  provider = google[each.key]
-  project  = each.value
-  role     = "roles/run.invoker"
-  member   = "serviceAccount:${google_service_account.default[each.key].email}"
+  project = var.project_ids[terraform.workspace]
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${google_service_account.default.email}"
 }
 
 resource "google_storage_bucket" "default" {
-  for_each = var.project_ids
-  provider = google[each.key]
-  name     = "${var.gcs_bucket_name}-${each.key}"
+  name     = "${var.gcs_bucket_name}-${terraform.workspace}"
   location = var.region
-  project  = each.value
+  project  = var.project_ids[terraform.workspace]
 }
 
 resource "google_eventarc_trigger" "default" {
-  for_each = var.project_ids
-  provider = google[each.key]
-  name     = "${var.cloud_run_service_name}-trigger"
+  name     = "${var.cloud_run_service_name}-trigger-${terraform.workspace}"
   location = var.region
-  project  = each.value
+  project  = var.project_ids[terraform.workspace]
 
   matching_criteria {
     attribute = "type"
@@ -52,15 +41,13 @@ resource "google_eventarc_trigger" "default" {
   }
   matching_criteria {
     attribute = "bucket"
-    value     = google_storage_bucket.default[each.key].name
+    value     = google_storage_bucket.default.name
   }
 
   destination {
     cloud_run_service {
-      service = google_cloud_run_v2_service.default[each.key].name
+      service = google_cloud_run_v2_service.default.name
       region  = var.region
     }
   }
-
-  service_account = google_service_account.default[each.key].email
 }

@@ -2,7 +2,7 @@ variable "project_ids" {
   description = "A map of Google Cloud project IDs for different environments."
   type        = map(string)
   default = {
-    prod = "fms-prod"
+    prod = "fms-prod-472514"
     rnd  = "fms-rnd"
   }
 }
@@ -11,12 +11,6 @@ variable "region" {
   description = "The region for the resources."
   type        = string
   default     = "europe-west2"
-}
-
-variable "credentials_path" {
-  description = "The path to the Google Cloud credentials file."
-  type        = string
-  default     = ""
 }
 
 variable "cloud_run_service_name" {
@@ -31,13 +25,17 @@ variable "gcs_bucket_name" {
   default     = "fsm-data-pipeline-bucket"
 }
 
-variable "service_account_email" {
-  description = "The email of the service account for the Cloud Run service."
+variable "artifact_registry_repository_name" {
+  description = "The name of the Artifact Registry repository."
   type        = string
+  default     = "fsm-repository"
 }
 
-variable "artifact_registry_repository_name" {
- description = "The name of the Artifact Registry repository."
- type        = string
- default     = "fsm-repository"
+variable "service_account_emails" {
+  description = "A map of service account emails to impersonate for each environment."
+  type        = map(string)
+  default = {
+    prod = "github-action-deployer@fms-prod-472514.iam.gserviceaccount.com"
+    rnd  = "github-action-deployer@fms-rnd.iam.gserviceaccount.com"
+  }
 }

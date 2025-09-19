@@ -1,9 +1,0 @@
-project_ids = {
-  prod = "your-gcp-prod-project-id"
-  rnd  = "your-gcp-rnd-project-id"
-}
-credentials_path      = "path/to/your/credentials.json"
-service_account_email = "your-service-account-email"
-
-
-
