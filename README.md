@@ -22,17 +22,21 @@ designed to support efficient **allocation of skilled engineers** for repairs an
 
 ```
 Cloud Storage (GCS)
-│
-▼ (New file uploaded every hour)
+        │
+        │
+        ▼ (New file uploaded every hour)
 
 Cloud Function Trigger (Event-based)
-│
-▼ (Calls HTTP endpoint with file info)
+        │
+        │
+        ▼ (Calls HTTP endpoint with file info)
 
 Cloud Run (Python Docker App: ETL pipeline)
-│
-▼
+        │
+        │
+        ▼
 BigQuery (Structured, queryable data layer)
+
 ```
 
 ## Setup Instructions

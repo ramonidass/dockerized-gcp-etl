@@ -30,10 +30,8 @@ def visits_schema_validation(
                     {"line_number": line_num, "raw_json": line.strip()}
                 )
 
-        df_valid = pl.DataFrame(
-            valid_visits) if valid_visits else pl.DataFrame()
-        df_invalid = pl.DataFrame(
-            invalid_lines) if invalid_lines else pl.DataFrame()
+        df_valid = pl.DataFrame(valid_visits) if valid_visits else pl.DataFrame()
+        df_invalid = pl.DataFrame(invalid_lines) if invalid_lines else pl.DataFrame()
 
         return df_valid, df_invalid
 
