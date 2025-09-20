@@ -2,7 +2,7 @@ import tempfile
 import os
 import polars as pl
 from app.utils.logger import logger
-from app.loader.process_visits import process_visits
+from app.loader.process_visits import visits_schema_validation
 
 
 def bigquery_via_parquet(
@@ -42,8 +42,7 @@ def bigquery_via_parquet(
             type_=bq_client.TimePartitioningType.DAY, field=partition_field
         )
 
-    load_job = bq_client.load_table_from_uri(
-        gcs_uri, table_id, job_config=job_config)
+    load_job = bq_client.load_table_from_uri(gcs_uri, table_id, job_config=job_config)
     load_job.result()
     logger.info(f"Loaded {df2.height} rows into {table_id}")
 
@@ -59,7 +58,7 @@ def ingest_visits(
     partition_field: str = "visit_date",
 ):
     try:
-        df_valid, df_invalid = process_visits(
+        df_valid, df_invalid = visits_schema_validation(
             bq_client, storage_client, bucket_name, file_name
         )
 
