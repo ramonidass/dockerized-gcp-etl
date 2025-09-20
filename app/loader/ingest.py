@@ -1,8 +1,9 @@
 import tempfile
 import os
 import polars as pl
+from google.cloud import bigquery
 from app.utils.logger import logger
-from app.loader.process_visits import process_visits
+from app.loader.process_visits import visits_schema_validation
 
 
 def bigquery_via_parquet(
@@ -18,6 +19,7 @@ def bigquery_via_parquet(
         [
             pl.col("visit_date").cast(pl.Date),
             pl.col("original_reported_date").cast(pl.Date),
+            pl.col("engineer_note").cast(pl.List(pl.Int64)),
         ]
     )
 
@@ -32,18 +34,31 @@ def bigquery_via_parquet(
     gcs_uri = f"gs://{bucket_name}/{blob_name}"
     logger.info(f"Uploaded staging parquet to {gcs_uri}")
 
-    job_config = bq_client.LoadJobConfig(
-        source_format=storage_client.SourceFormat.PARQUET,
-        write_disposition=bq_client.WriteDisposition.WRITE_APPEND,
-        autodetect=False,
+    schema = [
+        bigquery.SchemaField("task_id", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("node_id", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("visit_id", "INTEGER", mode="NULLABLE"),
+        bigquery.SchemaField("visit_date", "DATE", mode="NULLABLE"),
+        bigquery.SchemaField("original_reported_date", "DATE", mode="NULLABLE"),
+        bigquery.SchemaField("node_age", "INTEGER", mode="NULLABLE"),
+        bigquery.SchemaField("node_type", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("task_type", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("engineer_skill_level", "INTEGER", mode="NULLABLE"),
+        bigquery.SchemaField("engineer_note", "INTEGER", mode="REPEATED"),
+        bigquery.SchemaField("outcome", "STRING", mode="NULLABLE"),
+    ]
+
+    job_config = bigquery.LoadJobConfig(
+        schema=schema,
+        source_format=bigquery.SourceFormat.PARQUET,
+        write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
     )
     if partition_field:
-        job_config.time_partitioning = bq_client.TimePartitioning(
-            type_=bq_client.TimePartitioningType.DAY, field=partition_field
+        job_config.time_partitioning = bigquery.TimePartitioning(
+            type_=bigquery.TimePartitioningType.DAY, field=partition_field
         )
 
-    load_job = bq_client.load_table_from_uri(
-        gcs_uri, table_id, job_config=job_config)
+    load_job = bq_client.load_table_from_uri(gcs_uri, table_id, job_config=job_config)
     load_job.result()
     logger.info(f"Loaded {df2.height} rows into {table_id}")
 
@@ -59,7 +74,7 @@ def ingest_visits(
     partition_field: str = "visit_date",
 ):
     try:
-        df_valid, df_invalid = process_visits(
+        df_valid, df_invalid = visits_schema_validation(
             bq_client, storage_client, bucket_name, file_name
         )
 
@@ -90,6 +105,12 @@ def ingest_visits(
             )
         else:
             logger.info("No invalid rows to ingest.")
+
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob(file_name)
+        processed_file_name = f"processed/{os.path.basename(file_name)}"
+        bucket.rename_blob(blob, processed_file_name)
+        logger.info(f"Moved processed file to {processed_file_name}")
 
     except Exception as e:
         logger.error(f"Failed ingestion: {e}")

@@ -1,11 +1,9 @@
-from pydatic_settings import SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings:
+class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    bucket_name: str
-    file_name: str
     staging_prefix: str
     valid_table_id: str
     invalid_table_id: str

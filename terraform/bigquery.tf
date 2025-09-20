@@ -52,5 +52,13 @@ resource "google_bigquery_table" "tables" {
   schema     = each.value.schema
   deletion_protection = false
 
+  dynamic "time_partitioning" {
+    for_each = each.key == "visits_information" ? [1] : []
+    content {
+      type  = "DAY"
+      field = "visit_date"
+    }
+  }
+
   depends_on = [google_bigquery_dataset.dataset]
 }

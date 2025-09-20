@@ -21,4 +21,4 @@ COPY app app
 COPY main.py .
 COPY settings.py .
 
-ENTRYPOINT ["python", "main.py"]
+CMD ["sh", "-c", "gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT:-8080} main:app"]

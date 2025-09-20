@@ -23,17 +23,15 @@ def visits_schema_validation(
             try:
                 json_data = json.loads(line.strip())
                 visit = Visit(**json_data)
-                valid_visits.append(visit.dict())
+                valid_visits.append(visit.model_dump())
             except (json.JSONDecodeError, ValidationError) as e:
                 logger.warning(f"[Line {line_num}] Validation failed: {e}")
                 invalid_lines.append(
                     {"line_number": line_num, "raw_json": line.strip()}
                 )
 
-        df_valid = pl.DataFrame(
-            valid_visits) if valid_visits else pl.DataFrame()
-        df_invalid = pl.DataFrame(
-            invalid_lines) if invalid_lines else pl.DataFrame()
+        df_valid = pl.DataFrame(valid_visits) if valid_visits else pl.DataFrame()
+        df_invalid = pl.DataFrame(invalid_lines) if invalid_lines else pl.DataFrame()
 
         return df_valid, df_invalid
 
