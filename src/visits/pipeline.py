@@ -1,12 +1,16 @@
+from src.utils.logger import get_logger
 import tempfile
 import os
+import json
 import polars as pl
 from google.cloud import bigquery
-from app.utils.logger import logger
-from app.loader.process_visits import visits_schema_validation
+from src.visits.transform import visits_schema_validation
 
 
-def bigquery_via_parquet(
+logger = get_logger(__name__)
+
+
+def bigquery_via_jsonl(
     df: pl.DataFrame,
     bq_client,
     storage_client,
@@ -15,43 +19,31 @@ def bigquery_via_parquet(
     table_id: str,
     partition_field: str = None,
 ):
-    df2 = df.with_columns(
-        [
-            pl.col("visit_date").cast(pl.Date),
-            pl.col("original_reported_date").cast(pl.Date),
-            pl.col("engineer_note").cast(pl.List(pl.Int64)),
-        ]
+    df = df.with_columns(
+        pl.col("visit_date").dt.strftime("%Y-%m-%d"),
+        pl.col("original_reported_date").dt.strftime("%Y-%m-%d"),
     )
 
-    with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tmp_file:
+    records = df.to_dicts()
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".jsonl", delete=False
+    ) as tmp_file:
         tmp_path = tmp_file.name
-        df2.write_parquet(tmp_path)
+        for record in records:
+            tmp_file.write(json.dumps(record) + "\n")
 
     blob_name = f"{staging_prefix}/{os.path.basename(tmp_path)}"
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(tmp_path)
     gcs_uri = f"gs://{bucket_name}/{blob_name}"
-    logger.info(f"Uploaded staging parquet to {gcs_uri}")
-
-    schema = [
-        bigquery.SchemaField("task_id", "STRING", mode="NULLABLE"),
-        bigquery.SchemaField("node_id", "STRING", mode="NULLABLE"),
-        bigquery.SchemaField("visit_id", "INTEGER", mode="NULLABLE"),
-        bigquery.SchemaField("visit_date", "DATE", mode="NULLABLE"),
-        bigquery.SchemaField("original_reported_date", "DATE", mode="NULLABLE"),
-        bigquery.SchemaField("node_age", "INTEGER", mode="NULLABLE"),
-        bigquery.SchemaField("node_type", "STRING", mode="NULLABLE"),
-        bigquery.SchemaField("task_type", "STRING", mode="NULLABLE"),
-        bigquery.SchemaField("engineer_skill_level", "INTEGER", mode="NULLABLE"),
-        bigquery.SchemaField("engineer_note", "INTEGER", mode="REPEATED"),
-        bigquery.SchemaField("outcome", "STRING", mode="NULLABLE"),
-    ]
+    logger.info(f"Uploaded staging JSONL to {gcs_uri}")
 
     job_config = bigquery.LoadJobConfig(
-        schema=schema,
-        source_format=bigquery.SourceFormat.PARQUET,
+        source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
         write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
+        autodetect=False,
     )
     if partition_field:
         job_config.time_partitioning = bigquery.TimePartitioning(
@@ -60,7 +52,7 @@ def bigquery_via_parquet(
 
     load_job = bq_client.load_table_from_uri(gcs_uri, table_id, job_config=job_config)
     load_job.result()
-    logger.info(f"Loaded {df2.height} rows into {table_id}")
+    logger.info(f"Loaded {df.height} rows into {table_id}")
 
 
 def ingest_visits(
@@ -80,7 +72,7 @@ def ingest_visits(
 
         if df_valid.height > 0:
             logger.info(f"Ingesting {df_valid.height} valid rows...")
-            bigquery_via_parquet(
+            bigquery_via_jsonl(
                 df=df_valid,
                 bq_client=bq_client,
                 storage_client=storage_client,
@@ -90,11 +82,11 @@ def ingest_visits(
                 partition_field=partition_field,
             )
         else:
-            logger.warning("No valid rows to ingest.")
+            logger.info("No valid rows to ingest.")
 
         if df_invalid.height > 0:
             logger.info(f"Ingesting {df_invalid.height} invalid rows...")
-            bigquery_via_parquet(
+            bigquery_via_jsonl(
                 df=df_invalid,
                 bq_client=bq_client,
                 storage_client=storage_client,

@@ -1,21 +1,16 @@
-from fastapi import FastAPI, Request, HTTPException
-from app.utils.logger import logger
-from app.utils.gcp_client import get_gcp_clients
-from app.loader.ingest import ingest_visits
-from settings import settings
+from src.utils.logger import get_logger
+from src.settings import settings
+from src.utils.gcp_client import get_gcp_clients
+from src.visits.pipeline import ingest_visits
 
 
-app = FastAPI()
+logger = get_logger(__name__)
 
 
-@app.post("/")
-async def receive_event(request: Request):
-    event_data = await request.json()
-    logger.info(f"Received event: {event_data}")
-
+def local_ingestor():
     try:
-        bucket_name = event_data.get("bucket")
-        file_name = event_data.get("name")
+        bucket_name = settings.bucket_name
+        file_name = settings.file_name
 
         if not bucket_name or not file_name:
             raise ValueError("'bucket' or 'name' not found in GCS event payload.")
@@ -45,4 +40,7 @@ async def receive_event(request: Request):
 
     except Exception as e:
         logger.error(f"Error processing event: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+
+
+if __name__ == "__main__":
+    local_ingestor()
