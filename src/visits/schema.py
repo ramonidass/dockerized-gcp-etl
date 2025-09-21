@@ -1,13 +1,13 @@
-from pydantic import BaseModel, field_validator, ValidationInfo
+from pydantic import BaseModel, field_validator, ValidationInfo, Field
 from typing import List, Literal, Optional
-from datetime import date
+from datetime import date, datetime
 
 
 class Visit(BaseModel):
     task_id: str
     node_id: str
     visit_id: int
-    visit_date: Optional[date] = None
+    visit_date: Optional[date] = Field(None, alias="visit_date:")
     original_reported_date: date
     node_age: int
     node_type: str
@@ -15,6 +15,13 @@ class Visit(BaseModel):
     engineer_skill_level: int
     engineer_note: List[int]
     outcome: Literal["SUCCESS", "FAIL"]
+
+    @field_validator("visit_date", mode="before")
+    @classmethod
+    def parse_visit_date(cls, v):
+        if v:
+            return datetime.strptime(v, "%Y-%m-%d %H:%M:%S").date()
+        return v
 
     @field_validator("visit_id", "node_age")
     @classmethod

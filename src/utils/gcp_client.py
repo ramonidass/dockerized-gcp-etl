@@ -1,5 +1,7 @@
 from google.cloud import bigquery, storage
-from app.utils.logger import logger
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_gcp_clients():

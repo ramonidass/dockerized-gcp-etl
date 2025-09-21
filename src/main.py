@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Request, HTTPException
-from app.utils.logger import logger
-from app.utils.gcp_client import get_gcp_clients
-from app.loader.ingest import ingest_visits
-from settings import settings
+from src.utils.logger import get_logger
+from src.utils.gcp_client import get_gcp_clients
+from src.visits.pipeline import ingest_visits
+from src.settings import settings
 
-
+logger = get_logger(__name__)
 app = FastAPI()
 
 
@@ -29,6 +29,11 @@ async def receive_event(request: Request):
             return {"status": "ignored", "reason": "Not a .txt file"}, 200
 
         bq_client, storage_client = get_gcp_clients()
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob(file_name)
+        if not blob.exists():
+            logger.info(f"Ignoring event for non-existent file: {file_name}")
+            return {"status": "ignored", "reason": "File not found"}, 200
 
         ingest_visits(
             bq_client=bq_client,

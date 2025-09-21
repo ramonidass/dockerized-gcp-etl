@@ -17,8 +17,6 @@ WORKDIR /app
 COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=base /usr/local/bin /usr/local/bin
 
-COPY app app
-COPY main.py .
-COPY settings.py .
+COPY src/ src/
 
-CMD ["sh", "-c", "gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT:-8080} main:app"]
+CMD ["sh", "-c", "gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT:-8080} src.main:app"]
