@@ -1,3 +1,9 @@
+
+--Find all successful visits that were:
+--	conducted by engineers with a skill level higher than 2
+--	took place between 1/1/2020 and 31/3/2020
+--	conducted to address a task following at least 2 failed attempts (i.e. at least 2 failed visits for the same task).
+
 WITH prior_failures AS (
   SELECT
     *,
