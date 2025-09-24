@@ -12,7 +12,8 @@ def local_ingestor():
         file_name = settings.file_name
 
         if not bucket_name or not file_name:
-            raise ValueError("'bucket' or 'name' not found in GCS event payload.")
+            raise ValueError(
+                "'bucket' or 'name' not found in GCS event payload.")
 
         if "processed/" in file_name:
             logger.info(f"Ignoring already processed file: {file_name}")

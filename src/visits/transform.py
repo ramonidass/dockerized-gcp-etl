@@ -33,10 +33,13 @@ def visits_schema_validation(
                     invalid_visits.append(json_data)
             except json.JSONDecodeError as e:
                 logger.error(f"[Line {line_num}] JSON decode error: {e}")
+                invalid_visits.append({"malformed_json": line.strip()})
 
-        df_valid = pl.from_dicts(valid_visits) if valid_visits else pl.DataFrame()
+        df_valid = pl.from_dicts(
+            valid_visits) if valid_visits else pl.DataFrame()
 
-        df_invalid = pl.from_dicts(invalid_visits) if invalid_visits else pl.DataFrame()
+        df_invalid = pl.from_dicts(
+            invalid_visits) if invalid_visits else pl.DataFrame()
 
         return df_valid, df_invalid
 
