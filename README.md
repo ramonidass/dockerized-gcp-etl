@@ -1,4 +1,4 @@
-# Field Service Management (FSM) Cloud Data Pipeline
+# Event-Driven Cloud Data Pipeline
 
 This project implements a **cloud-native data pipeline** on GCP for a Field Service Management (FSM) system. The primary goal is to ingest, validate, and structure telecommunications network data for further analysis.
 
@@ -58,7 +58,7 @@ The CI/CD pipeline is triggered when a commit is merged into the `main` branch a
     #using uv -> pip install uv
     uv venv
     source .venv/bin/activate
-    uv uv pip install -e .
+    uv pip install -e .
     ```
 -   **Authenticate with GCP:**
     ```bash
@@ -76,35 +76,32 @@ The CI/CD pipeline is triggered when a commit is merged into the `main` branch a
 
 ### Running the Pipeline Locally
 
--  **Navigate to the Terraform directory:**
+1.  **Deploy the Infrastructure:**
+    First, navigate to the Terraform directory to deploy the necessary GCP resources.
     ```bash
-    cd terraform
-    ```
-
--  **Initialize Terraform:**
-    ```bash
+    cd terraform/enviroments/rnd
     terraform init
-    ```
-
--  **Select workspace(project) for the deployment:**
-    ```bash
-    terraform workspace select <prod-env>
-    ```
-
--  **Plan changes**
-    ```bash
     terraform plan
-    ```
-
--  **Apply the changes:**
-    ```bash
     terraform apply
     ```
- 
--  **Upload file in the bucket and execute the `scripts.run_local_pipeline.py` to run the ingestion process.**
+
+2.  **Run the Ingestion Script:**
+    After the infrastructure is deployed, return to the project root and run the local pipeline script. This script simulates the Cloud Run function by processing a file from the GCS bucket.
     ```bash
+    cd ..
     uv run python -m src.scripts.run_local_pipeline
     ```
+
+---
+
+## Testing
+
+To run the test suite, use the following command:
+
+```bash
+uv run pytest
+```
+
 ---
 
 
