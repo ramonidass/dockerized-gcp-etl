@@ -1,39 +1,38 @@
 resource "google_cloud_run_v2_service" "default" {
   name     = var.cloud_run_service_name
   location = var.region
-  project  = var.project_ids[terraform.workspace]
+  project  = var.project_id
 
   template {
     containers {
-      image = "${var.region}-docker.pkg.dev/${var.project_ids[terraform.workspace]}/${var.artifact_registry_repository_name}/${var.cloud_run_service_name}:${var.image_tag}"
+      image = var.image_url
     }
+    service_account = google_service_account.default.email
   }
-
-  depends_on = [google_project_service.api_enablement]
 }
 
 resource "google_service_account" "default" {
-  account_id   = var.cloud_run_service_name
-  display_name = "Cloud Run Service Account for FSM Data Pipeline"
-  project      = var.project_ids[terraform.workspace]
+  account_id   = var.service_account_id
+  display_name = "Cloud Run Service Account for ${var.cloud_run_service_name}"
+  project      = var.project_id
 }
 
 resource "google_project_iam_member" "run_invoker" {
-  project = var.project_ids[terraform.workspace]
+  project = var.project_id
   role    = "roles/run.invoker"
   member  = "serviceAccount:${google_service_account.default.email}"
 }
 
 resource "google_storage_bucket" "default" {
-  name     = "${var.gcs_bucket_name}-${terraform.workspace}"
+  name     = var.gcs_bucket_name
   location = var.region
-  project  = var.project_ids[terraform.workspace]
+  project  = var.project_id
 }
 
 resource "google_eventarc_trigger" "default" {
-  name     = "${var.cloud_run_service_name}-trigger-${terraform.workspace}"
+  name     = var.eventarc_trigger_name
   location = var.region
-  project  = var.project_ids[terraform.workspace]
+  project  = var.project_id
 
   matching_criteria {
     attribute = "type"
@@ -50,4 +49,6 @@ resource "google_eventarc_trigger" "default" {
       region  = var.region
     }
   }
+
+  service_account = google_service_account.default.email
 }

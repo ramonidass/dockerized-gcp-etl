@@ -32,7 +32,8 @@ variable "artifact_registry_repository_name" {
 }
 
 variable "service_account_emails" {
-  description = "A map of service account emails to impersonate for each environment."
+  description = "A map of service account emails
+                to impersonate for each environment."
   type        = map(string)
   default = {
     prod = "github-action-deployer@fms-prod-472514.iam.gserviceaccount.com"
